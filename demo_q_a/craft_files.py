@@ -1,13 +1,12 @@
 from transformers import (AutoModel, CamembertForQuestionAnswering,
                           pipeline, AutoModelForQuestionAnswering, AutoTokenizer)
 import numpy as np
-from tqdm import tqdm
 import json
 import os
 import glob
 import torch
-from unicodedata import normalize
 import re
+from rich import track
 # LANG = "fr"
 LANG = "en"
 
@@ -29,7 +28,7 @@ bertizer = AutoModel.from_pretrained(model)
 with open("covid_raw.json", "r") as file:
     dico = json.load(file)
 
-for source, sub_dic in tqdm(dico.items()):
+for source, sub_dic in track(dico.items()):
     try:
         raw_text = sub_dic["content_fr"]
         raw_text = sub_dic["title_fr"]

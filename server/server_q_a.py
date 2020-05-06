@@ -6,6 +6,8 @@ from transformers import (AutoModel, AutoModelForQuestionAnswering,
 import torch
 import re
 import numpy as np
+from rich import print
+
 app = Sanic("Covid_NLU")
 
 QA_MODEL_NAME_FR = "illuin/camembert-large-fquad"
@@ -17,20 +19,23 @@ EMB_MODEL_NAME_FR = "camembert-base"
 EMB_TOK_FR = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_FR)
 EMB_FR = AutoModel.from_pretrained(EMB_MODEL_NAME_FR)
 
-QA_MODEL_NAME_EN = "bert-large-uncased-whole-word-masking-finetuned-squad"
-QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
-QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
-QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
+# QA_MODEL_NAME_EN = "bert-large-uncased-whole-word-masking-finetuned-squad"
+# QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
+# QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
+# QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
 
-EMB_MODEL_NAME_EN = "bert-large-uncased"
-EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
-EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
+# EMB_MODEL_NAME_EN = "bert-large-uncased"
+# EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
+# EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
+
+print(":floppy_disk: [green]Model loaded[/green] :floppy_disk:")
 
 
-@app.route("/get_embedding")
+@app.post("/get_embedding")
 async def get_embedding(request):
-    LANG = request.json.lang
-    text = request.json.question
+    data = request.json
+    LANG = data["lang"]
+    text = data["utterances"]
     if LANG == "fr":
         tokenizer = EMB_TOK_FR
         embedder = EMB_FR
@@ -53,22 +58,23 @@ async def get_embedding(request):
         last_hidden, pool = embedder(input_tensor["input_ids"],
                                      input_tensor["attention_mask"])
         emb_text = torch.mean(torch.mean(last_hidden, axis=1), axis=0)
-        emb_text = emb_text.squeeze().detach().cpu().data.numpy().to_list()
+        emb_text = emb_text.squeeze().detach().cpu().data.numpy().tolist()
     return json({"embeddings": emb_text})
 
 
-@app.route("/get_answer")
+@app.post("/get_answer")
 async def get_answer(request):
-    LANG = request.json.lang
-    QUESTION = request.json.question
-    DOCS = request.json.question
+    data = request.json
+    LANG = data["lang"]
+    question = data["question"]
+    documents = data["docs"]
     if LANG == "fr":
         q_a_pipeline = QA_FR
     elif LANG == "en":
         q_a_pipeline = QA_EN
     resultats = []
-    for doc in DOCS:
-        res = q_a_pipeline({'question': QUESTION, 'context': doc})
+    for doc in documents:
+        res = q_a_pipeline({'question': question, 'context': doc})
         big_left = max(0, res["start"]-500)
         big_right = min(res["end"]+500, len(doc))
         dic_res = {}
@@ -78,7 +84,7 @@ async def get_answer(request):
         dic_res["start"] = res["start"]-big_left
         dic_res["end"] = res["end"]-big_left
         resultats.append(dic_res)
-    return resultats
+    return json({"answers": resultats})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True, access_log=True)
