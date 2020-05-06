@@ -6,7 +6,7 @@ import os
 import glob
 import torch
 import re
-from rich import track
+from rich.progress import track
 # LANG = "fr"
 LANG = "en"
 

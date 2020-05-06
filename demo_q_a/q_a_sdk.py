@@ -28,15 +28,15 @@ def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline) -> List[R
         emb_q = torch.mean(last_hidden_question, axis=1)
         emb_q = emb_q.squeeze().detach().cpu().data.numpy()
 
-    # embs = [(np.linalg.norm(emb_q-sub_dic.get("embedding_title_fr",
-    #                                           np.full_like(emb_q, 10000000))),
-    #          source) for source, sub_dic in dico.items()]
+    # embs = [(np.linalg.norm(emb_q-sub_dic["embedding_title_fr"]), source) for
+    #         source, sub_dic in dico.items()
+    #         if sub_dic.get("embedding_title_fr", None) is not None]
 
-    embs = [(cosine_distance(emb_q, sub_dic.get("embedding_title_fr",
-                                                np.full_like(emb_q, 10000000))),
-             source) for source, sub_dic in dico.items()]
+    embs = [(cosine_distance(emb_q, sub_dic["embedding_title_fr"]), source)
+            for source, sub_dic in dico.items()
+            if sub_dic.get("embedding_title_fr", None) is not None]
 
-    top_3 = sorted(embs)[:2]
+    top_3 = sorted(embs)[:3]
 
     resultats: List[Result] = []
     for i, (score, source) in enumerate(top_3):
