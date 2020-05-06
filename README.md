@@ -1,8 +1,8 @@
 # Q-A_Covid
-## Attention il faut telecharger les poids des modeles avant (~4 x 800Mo)
+## Attention le code telecharge automatiquement les poids des modeles avant (~4 x 800Mo)
 ### Pour rouler la demo : 
 `cd demo_q_a`
-`python craft_files.py`
+`python craft_files.py` Pour calculer les embeddings necessaires
 `python Demo_Q_A.py`
 La demo se lance avec quelques questions deja faites puis lance le mode interactif
 
