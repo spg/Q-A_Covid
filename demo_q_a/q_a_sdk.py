@@ -15,7 +15,7 @@ class Result(TypedDict):
 
 
 def cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
-    return np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
+    return 1-np.dot(a, b)/((np.linalg.norm(a)*np.linalg.norm(b)))
 
 
 def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline) -> List[Result]:
