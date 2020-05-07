@@ -4,7 +4,6 @@ from transformers import (AutoModel, AutoModelForQuestionAnswering,
                           AutoTokenizer, CamembertForQuestionAnswering,
                           pipeline)
 import torch
-import re
 import numpy as np
 from rich import print
 
@@ -19,35 +18,34 @@ EMB_MODEL_NAME_FR = "camembert-base"
 EMB_TOK_FR = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_FR)
 EMB_FR = AutoModel.from_pretrained(EMB_MODEL_NAME_FR)
 
-# QA_MODEL_NAME_EN = "bert-large-uncased-whole-word-masking-finetuned-squad"
-# QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
-# QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
-# QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
+QA_MODEL_NAME_EN = "bert-large-uncased-whole-word-masking-finetuned-squad"
+QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
+QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
+QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
 
-# EMB_MODEL_NAME_EN = "bert-large-uncased"
-# EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
-# EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
+EMB_MODEL_NAME_EN = "bert-large-uncased"
+EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
+EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
 
 print(":floppy_disk: [green]Model loaded[/green] :floppy_disk:")
 
 
-@app.post("/get_embedding")
+@app.post("/embeddings")
 async def get_embedding(request):
-    data = request.json
-    LANG = data["lang"]
-    text = data["utterances"]
-    if LANG == "fr":
+    lang = request.json.get('lang')
+    text = request.json.get('text')
+    if lang == "fr":
         tokenizer = EMB_TOK_FR
         embedder = EMB_FR
-    elif LANG == "en":
+    elif lang == "en":
         tokenizer = EMB_TOK_EN
         embedder = EMB_EN
 
-    text_clean = re.sub(
-        r'(((http|ftp|https):\/\/)|(www\.))([\wàâçéèêëîïôûùüÿñæœ.,@?^=%&:\\\/~+#-]*[\w@?^=%&\/~+#-])?',
-        " ",
-        text)
-    splited_text = np.array(text_clean.split(" "))
+    # text_clean = re.sub(
+    #     r'(((http|ftp|https):\/\/)|(www\.))([\wàâçéèêëîïôûùüÿñæœ.,@?^=%&:\\\/~+#-]*[\w@?^=%&\/~+#-])?',
+    #     " ",
+    #     text)
+    splited_text = np.array(text.split(" "))
     splitted_chunk_text = np.array_split(splited_text,
                                          (len(splited_text)//200)+1)
     chunk_text = [" ".join(s) for s in splitted_chunk_text]
@@ -65,29 +63,20 @@ async def get_embedding(request):
     return json({"embeddings": emb_text})
 
 
-@app.post("/get_answer")
+
+@app.post("/answers")
 async def get_answer(request):
-    data = request.json
-    LANG = data["lang"]
-    question = data["question"]
-    documents = data["docs"]
-    if LANG == "fr":
+    lang = request.json.get('lang')
+    question = request.json.get('question')
+    documents = request.json.get('docs')
+    if lang == "fr":
         q_a_pipeline = QA_FR
-    elif LANG == "en":
+    elif lang == "en":
         q_a_pipeline = QA_EN
-    resultats = []
-    for doc in documents:
-        res = q_a_pipeline({'question': question, 'context': doc})
-        big_left = max(0, res["start"]-500)
-        big_right = min(res["end"]+500, len(doc))
-        dic_res = {}
-        dic_res["score"] = res["score"]
-        dic_res["ctx"] = doc[big_left:big_right]
-        dic_res["answer"] = res["answer"]
-        dic_res["start"] = res["start"]-big_left
-        dic_res["end"] = res["end"]-big_left
-        resultats.append(dic_res)
+
+    resultats = [q_a_pipeline({'question': question, 'context': doc}) for doc in documents]
+
     return json({"answers": resultats})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True, access_log=True)
+    app.run(host="0.0.0.0", port=8000, workers=4)
