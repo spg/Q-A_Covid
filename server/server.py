@@ -1,51 +1,28 @@
 from sanic import Sanic
+from sanic.exceptions import abort
 from sanic.response import json
-from transformers import (AutoModel, AutoModelForQuestionAnswering,
-                          AutoTokenizer, CamembertForQuestionAnswering,
-                          pipeline)
 import torch
 import numpy as np
-from rich import print
-import load_and_save_models
+from model_loader import (preload_weights, get_loading_status, get_models_for_lang, load_models)
 
 app = Sanic("Covid_NLU")
+preload_weights()
 
-QA_MODEL_NAME_FR = "./weights/Camembert_Q_A"
-QA_TOK_FR = AutoTokenizer.from_pretrained(QA_MODEL_NAME_FR)
-QA_MODEL_FR = CamembertForQuestionAnswering.from_pretrained(QA_MODEL_NAME_FR)
-QA_FR = pipeline('question-answering', model=QA_MODEL_FR, tokenizer=QA_TOK_FR)
 
-EMB_MODEL_NAME_FR = "./weights/Camembert"
-EMB_TOK_FR = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_FR)
-EMB_FR = AutoModel.from_pretrained(EMB_MODEL_NAME_FR)
-
-# QA_MODEL_NAME_EN = "./weights/Bert_Q_A"
-# QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
-# QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
-# QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
-
-# EMB_MODEL_NAME_EN = "./weights/Bert"
-# EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
-# EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
-
-print(":floppy_disk: [green]Models loaded[/green] :floppy_disk:")
+@app.get('status')
+async def get_info(req):
+    return json({'status': get_loading_status()})
 
 
 @app.post("/embeddings")
 async def get_embedding(request):
     lang = request.json.get('lang')
     text = request.json.get('text')
-    if lang == "fr":
-        tokenizer = EMB_TOK_FR
-        embedder = EMB_FR
-    elif lang == "en":
-        tokenizer = EMB_TOK_EN
-        embedder = EMB_EN
+    try:
+        tokenizer, embedder, _ = get_models_for_lang(lang)
+    except:
+        abort(400, 'Model not loaded')
 
-    # text_clean = re.sub(
-    #     r'(((http|ftp|https):\/\/)|(www\.))([\wàâçéèêëîïôûùüÿñæœ.,@?^=%&:\\\/~+#-]*[\w@?^=%&\/~+#-])?',
-    #     " ",
-    #     text)
     splited_text = np.array(text.split(" "))
     splitted_chunk_text = np.array_split(splited_text,
                                          (len(splited_text)//200)+1)
@@ -69,15 +46,18 @@ async def get_answer(request):
     lang = request.json.get('lang')
     question = request.json.get('question')
     documents = request.json.get('docs')
-    if lang == "fr":
-        q_a_pipeline = QA_FR
-    elif lang == "en":
-        q_a_pipeline = QA_EN
+    try:
+        _, __, q_a_pipeline = get_models_for_lang(lang)
+    except:
+        abort(400, 'Model not loaded')
+    else:
+        results = [q_a_pipeline({'question': question, 'context': doc})for doc in documents]
 
-    resultats = [q_a_pipeline({'question': question, 'context': doc})
-                 for doc in documents]
+        return json({"answers": results})
 
-    return json({"answers": resultats})
+load_models()
 
 if __name__ == "__main__":
-    app.run(port=8000, workers=4)
+    # TODO load models in an async coro
+    app.run(host="0.0.0.0",port=8000, workers=1)
+
