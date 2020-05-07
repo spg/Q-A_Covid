@@ -37,8 +37,8 @@ def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline):
             L2_content = np.linalg.norm(emb_q-emb_content)
             Cos_title = cosine_distance(emb_q, emb_title)
             Cos_content = cosine_distance(emb_q, emb_content)
-            L2_title + L2_content + Cos_title + Cos_content
-            embs.append((L2_content, source))
+
+            embs.append((L2_content+Cos_content, source))
 
     top_3 = sorted(embs)[:3]
 

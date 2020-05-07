@@ -1,4 +1,5 @@
-FROM python:3
+# FROM python:3
+FROM pytorch/pytorch:latest
 
 WORKDIR /usr/src/app
 
