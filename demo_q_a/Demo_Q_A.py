@@ -17,17 +17,17 @@ Cam = AutoModel.from_pretrained(Emb_model)
 
 
 questions = [
-    # "Que faire si je presente des symptomes du Covid-19 ?",
-    # "Que se passe-t-il si je dois m'absenter",
-    # "Que dois-je faire avec le renvoie de mes appels ?",
-    # "Existe-t-il des aides pour les gens inaptes au travail ?",
-    # "Je peux aller travailler en rentrant de voyage ?",
+    "Que faire si je presente des symptomes du Covid-19 ?",
+    "Que se passe-t-il si je dois m'absenter",
+    "Que dois-je faire avec le renvoie de mes appels ?",
+    "Existe-t-il des aides pour les gens inaptes au travail ?",
+    "Je peux aller travailler en rentrant de voyage ?",
     "Combien de temps une personne reste infectieuse ?",
-    # "Que dois-je faire avant de reintegrer mon travail ?",
-    # "J'ai peur pour mes enfants dont j'ai la garde partagée",
+    "Que dois-je faire avant de reintegrer mon travail ?",
+    "J'ai peur pour mes enfants dont j'ai la garde partagée",
     "J'ai peur pour mon conjoint qui travaille dans la santé",
-    # "Comment fonctionnent les services de garde d'urgence ?",
-    # "Dois-je envoyer mon enfant à l'école ?"
+    "Comment fonctionnent les services de garde d'urgence ?",
+    "Dois-je envoyer mon enfant à l'école ?"
 ]
 
 with open("covid_data.json", "r") as file:

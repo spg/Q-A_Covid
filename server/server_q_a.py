@@ -51,14 +51,17 @@ async def get_embedding(request):
     splitted_chunk_text = np.array_split(splited_text,
                                          (len(splited_text)//200)+1)
     chunk_text = [" ".join(s) for s in splitted_chunk_text]
-    with torch.no_grad():
-        input_tensor = tokenizer.batch_encode_plus(chunk_text,
-                                                   pad_to_max_length=True,
-                                                   return_tensors="pt")
-        last_hidden, pool = embedder(input_tensor["input_ids"],
-                                     input_tensor["attention_mask"])
-        emb_text = torch.mean(torch.mean(last_hidden, axis=1), axis=0)
-        emb_text = emb_text.squeeze().detach().cpu().data.numpy().tolist()
+    try:
+        with torch.no_grad():
+            input_tensor = tokenizer.batch_encode_plus(chunk_text,
+                                                       pad_to_max_length=True,
+                                                       return_tensors="pt")
+            last_hidden, pool = embedder(input_tensor["input_ids"],
+                                         input_tensor["attention_mask"])
+            emb_text = torch.mean(torch.mean(last_hidden, axis=1), axis=0)
+            emb_text = emb_text.squeeze().detach().cpu().data.numpy().tolist()
+    except RuntimeError as e:
+        return json({"error": f"Be careful, special strings will be tokenized in many pieces and the model will not be able to fit : {e}"})
     return json({"embeddings": emb_text})
 
 
