@@ -25,7 +25,7 @@ tokenizer = AutoTokenizer.from_pretrained(model)
 # bertizer = AutoModelForQuestionAnswering.from_pretrained(model)
 bertizer = AutoModel.from_pretrained(model)
 
-with open("covid_raw.json", "r") as file:
+with open("covid_splitted_raw.json", "r") as file:
     dico = json.load(file)
 
 for source, sub_dic in track(dico.items()):

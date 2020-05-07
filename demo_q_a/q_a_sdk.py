@@ -18,7 +18,7 @@ def cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
     return 1-np.dot(a, b)/((np.linalg.norm(a)*np.linalg.norm(b)))
 
 
-def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline) -> List[Result]:
+def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline):
     with torch.no_grad():
         input_tensor = tokenizer.batch_encode_plus([question],
                                                    pad_to_max_length=True,
@@ -28,13 +28,17 @@ def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline) -> List[R
         emb_q = torch.mean(last_hidden_question, axis=1)
         emb_q = emb_q.squeeze().detach().cpu().data.numpy()
 
-    embs = [(np.linalg.norm(emb_q-sub_dic["embedding_title_fr"]), source) for
-            source, sub_dic in dico.items()
-            if sub_dic.get("embedding_title_fr", None) is not None]
-
-    # embs = [(cosine_distance(emb_q, sub_dic["embedding_title_fr"]), source)
-    #         for source, sub_dic in dico.items()
-    #         if sub_dic.get("embedding_title_fr", None) is not None]
+    embs = []
+    for source, sub_dic in dico.items():
+        emb_title = sub_dic.get("embedding_title_fr", None)
+        emb_content = sub_dic.get("embedding_content_fr", None)
+        if emb_title is not None and emb_content is not None:
+            L2_title = np.linalg.norm(emb_q-emb_title)
+            L2_content = np.linalg.norm(emb_q-emb_content)
+            Cos_title = cosine_distance(emb_q, emb_title)
+            Cos_content = cosine_distance(emb_q, emb_content)
+            L2_title + L2_content + Cos_title + Cos_content
+            embs.append((L2_content, source))
 
     top_3 = sorted(embs)[:3]
 
