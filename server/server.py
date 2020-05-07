@@ -3,7 +3,6 @@ from sanic.exceptions import abort
 from sanic.response import json
 import torch
 import numpy as np
-from rich import print
 from model_loader import (preload_weights, get_loading_status, get_models_for_lang, load_models)
 
 app = Sanic("Covid_NLU")
@@ -60,5 +59,5 @@ load_models()
 
 if __name__ == "__main__":
     # TODO load models in an async coro
-    app.run(port=8000, workers=4)
+    app.run(port=8000, workers=1)
 

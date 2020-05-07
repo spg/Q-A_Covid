@@ -17,14 +17,14 @@ def load_models():
     print(":floppy_disk: [yellow]Loading FR model ...[/yellow]")
     QA_TOK_FR = AutoTokenizer.from_pretrained(QA_MODEL_NAME_FR)
     QA_MODEL_FR = CamembertForQuestionAnswering.from_pretrained(QA_MODEL_NAME_FR)
-    print(":floppy_disk: [green]Loaded FR models[/green]")
     _LOADED_MODELS['FR'] = {
         'QNA': pipeline('question-answering', model=QA_MODEL_FR, tokenizer=QA_TOK_FR),
         'TOK': AutoTokenizer.from_pretrained(EMB_MODEL_NAME_FR),
         'EMB': AutoModel.from_pretrained(EMB_MODEL_NAME_FR)
     }
+    print(":floppy_disk: [green]Loaded FR models[/green]")
 
-    print(":floppy_disk: [yellow]Loading EN model[/yellow]")
+    print(":floppy_disk: [yellow]Loading EN model[/yellow] ...")
     QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
     QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
     _LOADED_MODELS['EN'] = {
@@ -32,6 +32,7 @@ def load_models():
         'TOK': AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN),
         'EMB': AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
     }
+    print(":floppy_disk: [green]Loaded EN models[/green]")
 
 def get_loading_status():
     return "loaded" if _LOADED_MODELS is not {} else "loading"
@@ -39,7 +40,6 @@ def get_loading_status():
 
 def get_models_for_lang(lang:str):
     lang_models = _LOADED_MODELS.get(lang.upper())
-    print(lang_models)
     if lang_models is None:
         raise RuntimeError()
     else:
