@@ -6,28 +6,29 @@ from transformers import (AutoModel, AutoModelForQuestionAnswering,
 import torch
 import numpy as np
 from rich import print
+import load_and_save_models
 
 app = Sanic("Covid_NLU")
 
-QA_MODEL_NAME_FR = "illuin/camembert-large-fquad"
+QA_MODEL_NAME_FR = "./weights/Camembert_Q_A"
 QA_TOK_FR = AutoTokenizer.from_pretrained(QA_MODEL_NAME_FR)
 QA_MODEL_FR = CamembertForQuestionAnswering.from_pretrained(QA_MODEL_NAME_FR)
 QA_FR = pipeline('question-answering', model=QA_MODEL_FR, tokenizer=QA_TOK_FR)
 
-EMB_MODEL_NAME_FR = "camembert-base"
+EMB_MODEL_NAME_FR = "./weights/Camembert"
 EMB_TOK_FR = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_FR)
 EMB_FR = AutoModel.from_pretrained(EMB_MODEL_NAME_FR)
 
-QA_MODEL_NAME_EN = "bert-large-uncased-whole-word-masking-finetuned-squad"
-QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
-QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
-QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
+# QA_MODEL_NAME_EN = "./weights/Bert_Q_A"
+# QA_TOK_EN = AutoTokenizer.from_pretrained(QA_MODEL_NAME_EN)
+# QA_MODEL_EN = AutoModelForQuestionAnswering.from_pretrained(QA_MODEL_NAME_EN)
+# QA_EN = pipeline('question-answering', model=QA_MODEL_EN, tokenizer=QA_TOK_EN)
 
-EMB_MODEL_NAME_EN = "bert-large-uncased"
-EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
-EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
+# EMB_MODEL_NAME_EN = "./weights/Bert"
+# EMB_TOK_EN = AutoTokenizer.from_pretrained(EMB_MODEL_NAME_EN)
+# EMB_EN = AutoModel.from_pretrained(EMB_MODEL_NAME_EN)
 
-print(":floppy_disk: [green]Model loaded[/green] :floppy_disk:")
+print(":floppy_disk: [green]Models loaded[/green] :floppy_disk:")
 
 
 @app.post("/embeddings")
@@ -63,7 +64,6 @@ async def get_embedding(request):
     return json({"embeddings": emb_text})
 
 
-
 @app.post("/answers")
 async def get_answer(request):
     lang = request.json.get('lang')
@@ -74,10 +74,10 @@ async def get_answer(request):
     elif lang == "en":
         q_a_pipeline = QA_EN
 
-    resultats = [q_a_pipeline({'question': question, 'context': doc}) for doc in documents]
+    resultats = [q_a_pipeline({'question': question, 'context': doc})
+                 for doc in documents]
 
     return json({"answers": resultats})
 
 if __name__ == "__main__":
     app.run(port=8000, workers=4)
-1

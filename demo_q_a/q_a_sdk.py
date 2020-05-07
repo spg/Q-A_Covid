@@ -28,13 +28,13 @@ def get_answer(question: str, dico, tokenizer, embedder, q_a_pipeline) -> List[R
         emb_q = torch.mean(last_hidden_question, axis=1)
         emb_q = emb_q.squeeze().detach().cpu().data.numpy()
 
-    # embs = [(np.linalg.norm(emb_q-sub_dic["embedding_title_fr"]), source) for
-    #         source, sub_dic in dico.items()
-    #         if sub_dic.get("embedding_title_fr", None) is not None]
-
-    embs = [(cosine_distance(emb_q, sub_dic["embedding_title_fr"]), source)
-            for source, sub_dic in dico.items()
+    embs = [(np.linalg.norm(emb_q-sub_dic["embedding_title_fr"]), source) for
+            source, sub_dic in dico.items()
             if sub_dic.get("embedding_title_fr", None) is not None]
+
+    # embs = [(cosine_distance(emb_q, sub_dic["embedding_title_fr"]), source)
+    #         for source, sub_dic in dico.items()
+    #         if sub_dic.get("embedding_title_fr", None) is not None]
 
     top_3 = sorted(embs)[:3]
 
@@ -64,7 +64,8 @@ def print_results(question, top_3):
     for data in top_3:
         start_answer, end_answer = data["start"], data["end"]
         print("\tContexte:", data['ctx'][:start_answer], end=" ")
-        print(f"[red]{data['ctx'][start_answer:end_answer]}[/red]", end=" ")
+        print(
+            f"[yellow]{data['ctx'][start_answer:end_answer]}[/yellow]", end=" ")
         print(data['ctx'][end_answer:])
         print("\tAnswer", round(data["score"], 4), data["answer"])
         print("\n\n\n")
