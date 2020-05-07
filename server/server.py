@@ -79,4 +79,5 @@ async def get_answer(request):
     return json({"answers": resultats})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, workers=4)
+    app.run(port=8000, workers=4)
+1
