@@ -1,0 +1,13 @@
+name: Docker
+on: [push]
+jobs:
+  build_and_push:
+    name: Build and push Docker image to GitHub Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.1.0
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8.0b4"
